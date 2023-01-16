@@ -19,8 +19,7 @@ newMessages
 app.get('/participants',async (req,res)=>{
    const participants= await db.collection("participants").find().toArray();
     
-    res.send(participants);
-    
+    res.send(participants);   
 })
 app.post('/participants',async(req,res)=>{
     const {nome}=req.body;    
@@ -46,20 +45,26 @@ app.post('/participants',async(req,res)=>{
     res.sendStatus(201);
 })
 app.get('/messages',async (req,res)=>{
-    const {limit}=req.query
-    console.log( isNaN(limit))
+    const {limit}=req.query    
     const messages= await db.collection("messages").find().toArray();
-    if (limit===undefined) return res.status(201).send(messages);
+    if (limit===undefined) return res.send(messages);
     else if(!isNaN(limit)&&limit>0){
         
             const newMessages=messages.slice(-limit)
-            res.status(201).send(newMessages)
+            res.send(newMessages)
         }
         else if(limit<=0||isNaN(limit))return res.sendStatus(422)
             
             
-    }
- )
+    
+})
+app.post('/messages',async(req,res)=>{
+    const {to,text,type}=req.body;
+    const from=req.headers.user
+    const time=dayjs();
+    await db.collection("messages").insertOne({from,to,text,type,time:time.format("HH.mm.ss")})
+    res.status(200).send("Deu bom mané");
+})
 app.listen(5000, () => {
     console.log('Servidor rodando na porta 5000')
   })
