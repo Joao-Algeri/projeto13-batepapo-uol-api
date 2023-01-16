@@ -29,7 +29,7 @@ app.post('/participants', async (req, res) => {
     });
     const validation = userSchema.validate(user, { abortEarly: false });
     if (validation.error) {
-        return res.status(422)
+        return res.sendStatus(422)
     }
     const userExists = await db.collection("participants").findOne({ nome });
 
@@ -40,7 +40,7 @@ app.post('/participants', async (req, res) => {
     await db.collection("messages").insertOne({
         from: nome, to: 'Todos', text: 'entra na sala...', type: 'status', time: now.format('HH:mm:ss')
     })
-    res.status(201).send("Usuário cadastrado");
+    res.sendStatus(201);
 })
 app.get('/messages',async (req,res)=>{
     const {limit}=req.query    
