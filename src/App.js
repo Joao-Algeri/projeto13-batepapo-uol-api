@@ -31,7 +31,7 @@ app.post('/participants', async (req, res) => {
     if (validation.error) {
         return res.status(422)
     }
-    const userExists = await db.collection("participants").findOne({ user });
+    const userExists = await db.collection("participants").findOne({ nome });
 
     if (userExists) return res.sendStatus(409)
     await db.collection("participants").insertOne({
@@ -40,7 +40,7 @@ app.post('/participants', async (req, res) => {
     await db.collection("messages").insertOne({
         from: nome, to: 'Todos', text: 'entra na sala...', type: 'status', time: now.format('HH:mm:ss')
     })
-    res.sendStatus(201);
+    res.status(201).send("Usuário cadastrado");
 })
 app.get('/messages',async (req,res)=>{
     const {limit}=req.query    
