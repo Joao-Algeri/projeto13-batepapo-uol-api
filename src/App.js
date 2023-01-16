@@ -34,13 +34,16 @@ app.post('/participants', async (req, res) => {
     const userExists = await db.collection("participants").findOne({ nome });
 
     if (userExists) return res.sendStatus(409)
+    else{
     await db.collection("participants").insertOne({
-        nome, lastStatus: Date.now()
+        nome, lastStatus: Date.now()        
     })
+    res.sendStatus(201);
+}
     await db.collection("messages").insertOne({
         from: nome, to: 'Todos', text: 'entra na sala...', type: 'status', time: now.format('HH:mm:ss')
     })
-    res.sendStatus(201);
+    //res.sendStatus(200);
 })
 app.get('/messages',async (req,res)=>{
     const {limit}=req.query    
