@@ -12,32 +12,30 @@ const app = express();
 app.use(express.json());
 app.use(cors())
 
-function MessageFilter(num,array){
-    const newMessages=messages.slice(-num)
-newMessages
-}
+
 app.get('/participants',async (req,res)=>{
    const participants= await db.collection("participants").find().toArray();
     
     res.send(participants);   
 })
-app.post('/participants',async(req,res)=>{
-    const {nome}=req.body;    
-    const user={nome,lastStatus:Date.now()};
-    let now=dayjs();
+app.post('/participants', async (req, res) => {
+    const { nome } = req.body;
+    const user = { nome, lastStatus: Date.now() };
+    let now = dayjs();
     const userSchema = joi.object({
+
         nome: joi.string().required(),
-        lastStatus:joi.number().required()          
-      });
-      const validation = userSchema.validate(user,{abortEarly:false});
-      if (validation.error) {
-        return res.status(422).send(validation.error.details)
-      }
-      const userExists=await db.collection("participants").findOne({nome});
-    
-      if(userExists) return res.sendStatus(409)
+        lastStatus: joi.number().required()
+    });
+    const validation = userSchema.validate(user, { abortEarly: false });
+    if (validation.error) {
+        return res.status(422)
+    }
+    const userExists = await db.collection("participants").findOne({ user });
+
+    if (userExists) return res.sendStatus(409)
     await db.collection("participants").insertOne({
-        nome,lastStatus:Date.now()
+        nome, lastStatus: Date.now()
     })
     await db.collection("messages").insertOne({
         from: nome, to: 'Todos', text: 'entra na sala...', type: 'status', time: now.format('HH:mm:ss')
@@ -65,6 +63,21 @@ app.post('/messages',async(req,res)=>{
     await db.collection("messages").insertOne({from,to,text,type,time:time.format("HH.mm.ss")})
     res.status(200).send("Deu bom mané");
 })
+// app.post('/status',async(req,res)=>{
+//     const User=req.headers.user;    
+//     try {
+//         const userExists = await db.collection("participants").findOne({ User })
+    
+//         if (!userExists) return res.status(404)
+    
+//          const newParticipants=await db.collection("participants").find({nome:"Paula Fora"})
+//          newParticipants.map((user)=>user.nome===User && user)
+//         return res.status(200)
+//       } catch (error) {
+//         return res.status(500).send("Deu um erro no servidor de banco de dados")
+//       } 
+// })
+
 app.listen(5000, () => {
     console.log('Servidor rodando na porta 5000')
   })
