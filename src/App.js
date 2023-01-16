@@ -12,6 +12,10 @@ const app = express();
 app.use(express.json());
 app.use(cors())
 
+function MessageFilter(num,array){
+    const newMessages=messages.slice(-num)
+newMessages
+}
 app.get('/participants',async (req,res)=>{
    const participants= await db.collection("participants").find().toArray();
     
@@ -21,6 +25,7 @@ app.get('/participants',async (req,res)=>{
 app.post('/participants',async(req,res)=>{
     const {nome}=req.body;    
     const user={nome,lastStatus:Date.now()};
+    let now=dayjs();
     const userSchema = joi.object({
         nome: joi.string().required(),
         lastStatus:joi.number().required()          
@@ -35,8 +40,31 @@ app.post('/participants',async(req,res)=>{
     await db.collection("participants").insertOne({
         nome,lastStatus:Date.now()
     })
+    await db.collection("messages").insertOne({
+        from: nome, to: 'Todos', text: 'entra na sala...', type: 'status', time: now.format('HH:mm:ss')
+    })
     res.sendStatus(201);
 })
+app.get('/messages',async (req,res)=>{
+    const {limit}=req.query
+    console.log( isNaN(limit))
+    const messages= await db.collection("messages").find().toArray();
+    if (limit===undefined) return res.status(201).send(messages);
+    else if(!isNaN(limit)&&limit>0){
+        
+            const newMessages=messages.slice(-limit)
+            res.status(201).send(newMessages)
+        }
+        else if(limit<=0||isNaN(limit))return res.sendStatus(422)
+            
+            
+    }
+ )
 app.listen(5000, () => {
     console.log('Servidor rodando na porta 5000')
   })
+
+
+
+
+  
