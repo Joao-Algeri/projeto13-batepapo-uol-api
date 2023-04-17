@@ -28,7 +28,7 @@ app.use(cors);
 app.post("/participants", async (req, res) => {
 
     const { name } = req.body;
-    const user = { name, lastStatus: Date.now() }
+    const participant = { name, lastStatus: Date.now() }
     const message = {
         from: name,
         to: 'Todos',
@@ -40,7 +40,7 @@ app.post("/participants", async (req, res) => {
     if (validation.error) res.status(422).send
 
     try {
-        await db.collection('users').insertOne(user)
+        await db.collection('participants').insertOne(participant)
         await db.collection('messages').insertOne(message)
         res.sendStatus(201);
     }
@@ -52,5 +52,5 @@ app.post("/participants", async (req, res) => {
 
 })
 
-const PORT = 5000
+const PORT = 5000;
 app.listen(PORT, () => console.log(`Rodando na porta ${PORT}`))
