@@ -7,40 +7,35 @@ import joi from 'joi'
 
 dotenv.config()
 
+const app = express();
+app.use(express.json());
+app.use(cors());
 
-const userSchema = joi.object({
-    name: joi.string().min(3).required()
-})
-// const messageSchema=joi.object({
-    //     to:joi.string().required().min(1)
-    //     text:string.required().min(3)
-    //     type:string.required().min(3)
-    // })
-    const mongoClient = new MongoClient(process.env.DATABASE_URL);
-    let db;
+
+const mongoClient = new MongoClient(process.env.DATABASE_URL);
+let db;
+
+try {
+    await mongoClient.connect()
+    db = mongoClient.db()
+} catch (error) {
+    console.error(error)
+    console.log('Houve um problema no servidor, tente novamente mais tarde')
+}
+
+app.post("/participants", async (req, res) => {
+    const userSchema = joi.object({
+        name: joi.string().min(3).required()
+    })
+    const { name } = req.body;
     
+    const {error} = userSchema.validate({name});
+    
+    if (error)  return res.status(422).send("Nome invalido")
     try {
-        await mongoClient.connect()
-        db = mongoClient.db()
-    } catch (error) {
-        console.error(error)
-        console.log('Houve um problema no servidor, tente novamente mais tarde')
-    }
-    const app = express();
-    app.use(express.json());
-    app.use(cors());
-    
-    app.post("/participants", async (req, res) => {
+        const participantIsLogged = await db.collection("participants").findOne({ name })
         
-        const { name } = req.body;
-
-        const {error} = userSchema.validate({name});
-
-        if (error) res.status(422).send()
-        try {
-            const participantIsLogged = await db.collection("participants").findOne({ name })
-
-            if(participantIsLogged) return res.status(409).send("Este nome ja foi utilizado")
+        if(participantIsLogged) return res.status(409).send("Este nome ja foi utilizado")
 
    
         await db.collection("participants").insertOne({ name, lastStatus: Date.now() })
@@ -60,21 +55,33 @@ const userSchema = joi.object({
         
         res.status(500).send('Houve um problema no servidor, tente novamente mais tarde');
     }
-    app.get("/participants",async(req,res)=>{
-        try{
-            const participants= await db.collection("participants").find().toArray()
-            if(participants===undefined) res.status(404).send("Nenhum usuário online")
-            res.send(participants)
-        }
-        catch{
-            res.status(500).send('Houve um problema no servidor, tente novamente mais tarde')
-        }
-   
- })
- app.post("/messages",(req,res)=>{
-
- })
+})
+app.get("/participants",async(req,res)=>{
+    try{
+        const participants= await db.collection("participants").find().toArray()
+        if(!participants) res.status(404).send("Nenhum usuário online")
+        res.send(participants)
+    }
+    catch{
+        res.status(500).send('Houve um problema no servidor, tente novamente mais tarde')
+    }
+    
+})
+app.post("/messages",(req,res)=>{
+    const {to,next,type}=req.body;
+    const {participant}=req.headers
+    const messageSchema=joi.object({
+        to:joi.string().min(3).required(),
+        text:string().min(3).required(),
+        type:string().min(3).required()        
+    })
+    const {error}=messageSchema.validate({to,next,type, from:participant},{abortEarly:false})
+    if(error){
+    const errorStatus = error.details.map((err)=>err.message)
+    return res.sendStatus(422).send(errorStatus)
+    }
 })
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Rodando na porta ${PORT}`))
+
