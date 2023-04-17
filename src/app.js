@@ -6,6 +6,9 @@ import dayjs from 'dayjs'
 import joi from 'joi'
 
 dotenv.config()
+const app = express();
+app.use(express.json());
+app.use(cors);
 
 
 const userschema = joi.object({
@@ -21,12 +24,9 @@ try {
     console.error(error)
     console.log('Houve um problema no servidor, tente novamente mais tarde')
 }
-const app = express();
-app.use(express.json());
-app.use(cors);
 
-app.post("/participants", async (req, res) => {
-
+app.post("/participants",async (req, res) => {
+   
     const { name } = req.body;
     const participant = { name, lastStatus: Date.now() }
     const message = {
@@ -38,10 +38,11 @@ app.post("/participants", async (req, res) => {
     }
     const validation = userschema.validate(req.body);
     if (validation.error) res.status(422).send
-
+    const participantIsLogged= await db.collection("participants").findOne({name})
     try {
-        await db.collection('participants').insertOne(participant)
-        await db.collection('messages').insertOne(message)
+       
+        await db.collection("participants").insertOne(participant)
+        await db.collection("messages").insertOne(message)
         res.sendStatus(201);
     }
     catch (error) {
