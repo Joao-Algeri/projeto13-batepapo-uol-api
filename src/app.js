@@ -81,6 +81,23 @@ app.post("/messages",(req,res)=>{
     return res.sendStatus(422).send(errorStatus)
     }
 })
+app.get("/messages",async(req,res)=>{
+    const { user } = req.headers
+    const limit = req.query.limit
+    if(limit/1==limit && limit ||parseInt(limit)<=0) return res.sendStatus(422)
+    try {
+
+        const allMessages = await db.collection("messages").find({$or: [{ from: user },{ to: { $in: [user, "Todos"] } },{ type: "message" }]
+        }).limit(Number(limit)).toArray()
+    
+        res.send(allMessages)
+    
+      } catch (err) {
+        console.error(err)
+        res.status(500).send("Houve um problema no servidor, tente mais tarde")
+      }
+    })
+
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Rodando na porta ${PORT}`))
